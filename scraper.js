@@ -2,6 +2,8 @@
 const tinyreq = require("tinyreq");
 const fs = require("fs");
 
+// [jwarden 4.19.2017] Be lazy like me, and use log vs. console.log because fuck mo typing.
+const log = console.log;
 const RIGHT_BRACE_RIGHT_BRACKET_DELIMENTER = "}];";
 const RIGHT_BRACE_COMMA_DELIMENTER = "},";
 const COLON_DELIMENTER = ":";
@@ -46,6 +48,20 @@ function producerProcessorsWSLCBRequest() {//error, body
 }
 **/
 
+// [jwarden 4.19.2017] NOTE: If you're going to abandon OOP, and forego
+// the 'this' keyword, then start using "Fat Arrow" or just arrow functions.
+// They don't have a this keyword, and if you're just returning a value,
+// you don't even need a return if it's just 1 line of code. Notice
+// I moved this up, though, because unliked function something,
+// you can't call it before it's defined (i.e. if you refactored
+// fullCompanyArchivePath to an Array function, it'd fail because
+// getNewDateTime is below it)
+
+// function geNewDateTime() {
+// 	return new Date().getTime();
+// }
+const getNewDateTime = new Date().getTime();
+
 function fullCompanyArchivePath() {
 	return DATABASE_PATH + 
 			COMPANIES_ARCHIVE_FILE_NAME + 
@@ -60,20 +76,32 @@ function fullRetailArchivePath() {
 			ARCHIVE_FILE_EXTENSION;
 }
 
-function geNewDateTime() {
-	return new Date().getTime();
-}
 
+
+
+// [jwarden 4.19.2017] Great opportunity here to start using list
+// comprehensions. Below, you take an array, and make a 
+// big-ole string out of it. Dope! However, true power
+// lies in array comprehensions, so let's refactor the below to a reduce.
+// same shit, less code, no "Exceptions".
 function buildRawCompanyDataString() {
 	var companyCount = companiesArray.length;
-	var allDataString = "";
-	for (var i=0;i<companyCount;i++) {
-		var company = companiesArray[i];
+	// var allDataString = "";
+	// for (var i=0;i<companyCount;i++) {
+	// 	var company = companiesArray[i];
+	// 	for (var prop in company) {
+	// 		//console.log(prop + ":" + company[prop]);
+	// 		allDataString += prop + ":" + company[prop];
+	// 	}
+	// }
+	var allDataString = companiesArray.reduce( (allDataString, company) =>
+	{
 		for (var prop in company) {
 			//console.log(prop + ":" + company[prop]);
 			allDataString += prop + ":" + company[prop];
 		}
-	}
+		return allDataString;
+	}, '');
 	allDataString = allDataString.trim();
 
 	return allDataString;
@@ -93,21 +121,28 @@ function cleanBodyString(body) {
 	return body;
 }
 
+// [jwarden 4.19.2017] Yet another pure function, love it.
+// However, if you're going to use mutable state, use let instead of var.
+// Knowing you, you'll head to the dark side and continue to a 100% usage of const,
+// but situations like this occur where it's easier to just create a var right quick
+// and do some line by line parsing, addition, whatever. If you use let,
+// the runtime and compilers will help you if you accidentally re-use it,
+// ecspecially where you have multiple nested area like in here.
 function createCompanies(body) {
 	//console.log("createCompanies: "+body);
 
-	var rawCompanyPropertyStringArray = body.split(RIGHT_BRACE_COMMA_DELIMENTER);
-	var rawCompanyPropertyStringCount = rawCompanyPropertyStringArray.length;
+	let rawCompanyPropertyStringArray = body.split(RIGHT_BRACE_COMMA_DELIMENTER);
+	let rawCompanyPropertyStringCount = rawCompanyPropertyStringArray.length;
 
-	for (var i=0;i<rawCompanyPropertyStringCount;i++) {
-		var companyString = rawCompanyPropertyStringArray[i];
-		var keyValuePairArray = companyString.split(COMMA_DELIMETER);
-		var company = {};
-		var keyValuePairCount = keyValuePairArray.length;
-		for(var j=0;j<keyValuePairCount;j++) {
-			var keyValuePair = keyValuePairArray[j].split(COLON_DELIMENTER);
-			var propertyName = keyValuePair[0];
-			var propertyValue = keyValuePair[1];
+	for (let i=0;i<rawCompanyPropertyStringCount;i++) {
+		let companyString = rawCompanyPropertyStringArray[i];
+		let keyValuePairArray = companyString.split(COMMA_DELIMETER);
+		let company = {};
+		let keyValuePairCount = keyValuePairArray.length;
+		for(let j=0;j<keyValuePairCount;j++) {
+			let keyValuePair = keyValuePairArray[j].split(COLON_DELIMENTER);
+			let propertyName = keyValuePair[0];
+			let propertyValue = keyValuePair[1];
 			propertyName = propertyName.replace(LICENSE_NUMBER_CLEAN_WITH_SINGLE_RIGHT_DOUBLE_QUOTE, LICENSE_NUMBER_CLEAN_WITH_SINGLE_RIGHT_DOUBLE_QUOTE);
 			propertyName = propertyName.replace(LICENSE_NUMBER_CONTAMINATED_02, LICENSE_NUMBER_CLEAN_WITH_SINGLE_RIGHT_DOUBLE_QUOTE);
 
@@ -294,7 +329,36 @@ function requestRetailersResponse(body) {
 var start1 = Date.now();
 var end1 = Date.now();
 
-function producerProcessorsResponse(body) {
+// function producerProcessorsResponse(body) {
+// 	//console.log("producerProcessorsResponse: "+body);
+	
+// 	var elapsed1 = end1 - start1;
+// 	console.log("producerProcessorsResponse::elapsed: "+elapsed1);
+	
+// 	body = cleanRetailBodyString(body);
+// 	return body;
+// }
+
+//tinyreq(WSLCB_MAPS_ARCGIS_COM_APPS_VIEW_INDEX, producersProcessorsWSLCBRequest);
+//const DISPENSARIES_REQUEST_URL = "http://weedmaps.com/dispensaries/in/dispensaries/in/united-states/washington";
+//const DISPENSARIES_REQUEST_URL = "http://weedmaps.com/dispensaries/in/united-states/washington/everettsnohomish";
+//tinyreq(DISPENSARIES_REQUEST_URL, function (err, body) {
+
+// [jwarden 4.19.2017] Expose these guys so you can test them. In CommonJS and Node, do:
+module.exports = {
+	RETAILERS_ARCHIVE_SAVED_SUCCESS_MESSAGE: RETAILERS_ARCHIVE_SAVED_SUCCESS_MESSAGE,
+	producerProcessorsResponse: producerProcessorsResponse
+};
+
+// or this syntax if you don't intend on changing the names, no need for the :
+module.exports = {
+	RETAILERS_ARCHIVE_SAVED_SUCCESS_MESSAGE,
+	producerProcessorsResponse
+};
+
+// or in ES6, go:
+
+export function producerProcessorsResponse(body) {
 	//console.log("producerProcessorsResponse: "+body);
 	
 	var elapsed1 = end1 - start1;
@@ -304,7 +368,15 @@ function producerProcessorsResponse(body) {
 	return body;
 }
 
-//tinyreq(WSLCB_MAPS_ARCGIS_COM_APPS_VIEW_INDEX, producersProcessorsWSLCBRequest);
-//const DISPENSARIES_REQUEST_URL = "http://weedmaps.com/dispensaries/in/dispensaries/in/united-states/washington";
-//const DISPENSARIES_REQUEST_URL = "http://weedmaps.com/dispensaries/in/united-states/washington/everettsnohomish";
-//tinyreq(DISPENSARIES_REQUEST_URL, function (err, body) {
+// or, if it were an Arrow function in ES6, go:
+
+// export const producerProcessorsResponse = body =>
+// {
+// 	//console.log("producerProcessorsResponse: "+body);
+	
+// 	var elapsed1 = end1 - start1;
+// 	console.log("producerProcessorsResponse::elapsed: "+elapsed1);
+	
+// 	body = cleanRetailBodyString(body);
+// 	return body;
+// };
